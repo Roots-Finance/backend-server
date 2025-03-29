@@ -1,4 +1,3 @@
-from dateutil.parser import parse
 from flask import jsonify, request
 
 from database import DB
