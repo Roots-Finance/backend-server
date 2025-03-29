@@ -15,5 +15,5 @@ ENV PORT=8080
 
 EXPOSE $PORT
 
-CMD ["python", "API.py"]
+CMD ["python", "main.py"]
 
