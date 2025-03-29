@@ -13,7 +13,11 @@ def create_user():
 
     Expected Request Body:
     {
-        "oauth_sub": ""
+      oauth_sub: string
+      plaid_key?: string
+      knot_key?: string
+      first_name?: string
+      last_name?: string
     }
     """
     if not DB.connected:
@@ -62,6 +66,18 @@ def create_user():
         last_name=req_json["last_name"],
         nessie_customer_id=new_customer.id,
     )
+
+    if "plaid_key" in req_json:
+        new_user.plaid_access_token = req_json["plaid_key"]
+
+    if "knot_key" in req_json:
+        new_user.knot_access_token = req_json["knot_key"]
+
+    if "first_name" in req_json:
+        new_user.first_name = req_json["first_name"]
+
+    if "last_name" in req_json:
+        new_user.last_name = req_json["last_name"]
 
     session.add(new_user)
 
