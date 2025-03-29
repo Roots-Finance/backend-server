@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, Enum, Float, ForeignKey
+from sqlalchemy import Column, Date, Enum, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -19,6 +19,7 @@ class Transaction(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     type = Column(Enum(TransactionType), nullable=False)
     amount = Column(Float, nullable=False)
+    date = Column(Date, nullable=False)
 
     account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
     account = relationship("Account", back_populates="transactions")

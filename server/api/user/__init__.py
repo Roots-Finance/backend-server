@@ -1,9 +1,13 @@
+from dateutil.parser import parse
 from flask import jsonify, request
 
 from database import DB
-from models import Account, Transaction, User
+from models import (Account, Category, Merchant, Transaction, TransactionType,
+                    User)
 from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
+
+from .populate_transactions import generate_transactions
 
 # from .user.populate_transactions import generate_transactions
 
@@ -83,7 +87,8 @@ def create_user():
 
     session.add(new_user)
 
-    # transactions = generate_transactions(100)
+    # Generate the transactions
+    transactions = generate_transactions()
 
     for acc_type in [
         AccountType.CHECKING,
@@ -92,13 +97,38 @@ def create_user():
     ]:
         new_account = new_customer.open_account(acc_type, acc_type.name)
         db_account = Account(nessie_id=new_account.id, user=new_user)
-        # filtered_transactions = [
-        #     t for t in transactions if t["account_id"] == str(acc_type)
-        # ]
-        # for transaction in filtered_transactions:
-        #     db_transaction = Transaction()
-        #     session.add(db_transaction)
         session.add(db_account)
+        for transaction in transactions[str(acc_type).lower().replace(" ", "_")]:
+            # Create category in DB if does not exist
+            category = (
+                session.query(Category)
+                .filter(Category.name == transaction["category"])
+                .first()
+            )
+            if not category:
+                category = Category(name=transaction["category"])
+                session.add(category)
+            # Create merchant in DB if does not exist
+            merchant = (
+                session.query(Merchant)
+                .filter(Merchant.name == transaction["merchant"])
+                .first()
+            )
+            if not merchant:
+                merchant = Merchant(name=transaction["merchant"], category=category)
+                session.add(merchant)
+            db_transaction = Transaction(
+                type=(
+                    TransactionType.DEBIT
+                    if transaction["amount"] < 0
+                    else TransactionType.CREDIT
+                ),
+                amount=abs(transaction["amount"]),
+                account=db_account,
+                merchant=merchant,
+                date=transaction["date"],
+            )
+            session.add(db_transaction)
 
     session.commit()
     user_json = {

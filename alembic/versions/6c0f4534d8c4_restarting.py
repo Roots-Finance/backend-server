@@ -1,8 +1,8 @@
-"""Update account model
+"""Restarting
 
-Revision ID: 9c6ebc6096ae
+Revision ID: 6c0f4534d8c4
 Revises: 
-Create Date: 2025-03-29 11:33:58.209485
+Create Date: 2025-03-29 16:18:35.383561
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9c6ebc6096ae'
+revision: str = '6c0f4534d8c4'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,9 +30,13 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('oauth_sub', sa.String(length=250), nullable=False),
+    sa.Column('first_name', sa.String(length=250), nullable=False),
+    sa.Column('last_name', sa.String(length=250), nullable=False),
     sa.Column('nessie_customer_id', sa.String(length=250), nullable=True),
     sa.Column('plaid_access_token', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('knot_access_token', sa.String(length=250), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('oauth_sub')
     )
     op.create_table('accounts',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -53,6 +57,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('type', sa.Enum('DEBIT', 'CREDIT', name='transactiontype'), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('account_id', sa.UUID(), nullable=False),
     sa.Column('merchant_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['account_id'], ['accounts.id'], ),
