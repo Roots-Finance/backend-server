@@ -5,7 +5,7 @@ from models import Account, Transaction, User
 from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
 
-from .user.populate_transactions import generate_transactions
+# from .user.populate_transactions import generate_transactions
 
 
 @app.route("/user", methods=["POST"])
@@ -83,7 +83,7 @@ def create_user():
 
     session.add(new_user)
 
-    transactions = generate_transactions(100)
+    # transactions = generate_transactions(100)
 
     for acc_type in [
         AccountType.CHECKING,
@@ -92,12 +92,12 @@ def create_user():
     ]:
         new_account = new_customer.open_account(acc_type, acc_type.name)
         db_account = Account(nessie_id=new_account.id, user=new_user)
-        filtered_transactions = [
-            t for t in transactions if t["account_id"] == str(acc_type)
-        ]
-        for transaction in filtered_transactions:
-            db_transaction = Transaction()
-            session.add(db_transaction)
+        # filtered_transactions = [
+        #     t for t in transactions if t["account_id"] == str(acc_type)
+        # ]
+        # for transaction in filtered_transactions:
+        #     db_transaction = Transaction()
+        #     session.add(db_transaction)
         session.add(db_account)
 
     session.commit()
