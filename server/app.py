@@ -8,5 +8,6 @@ api_router = Blueprint("api", __name__, url_prefix="/api", cli_group=None)
 
 import server.api.test
 import server.api.user
+import server.api.user.accounts
 
 app.register_blueprint(api_router)

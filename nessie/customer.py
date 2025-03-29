@@ -140,7 +140,7 @@ class Customer:
             f"/customers/{self.id}/accounts",
             {
                 "type": str(account_type),
-                "nickname": f"${nickname} | {account_number}",
+                "nickname": f"{nickname} | {account_number}",
                 "rewards": 0,
                 "balance": 0,
             },

@@ -13,7 +13,6 @@ class Account:
     nickname: str
     rewards: float
     balance: float
-    account_number: str
     customer_id: str
     purchases: List[Purchase]
 
@@ -32,7 +31,6 @@ class Account:
             self.nickname = str(kwargs.get("nickname"))
             self.rewards = float(str(kwargs.get("rewards")))
             self.balance = float(str(kwargs.get("balance")))
-            self.account_number = str(kwargs.get("account_number"))
             self.customer_id = str(kwargs.get("customer_id"))
             self.purchases = self.get_purchases()
 
@@ -77,3 +75,13 @@ class Account:
             )
 
         return purchase_objs
+
+    def get_account(self, account_id: str):
+        response_json = self.client.get(f"/accounts/{account_id}").json()
+
+        self.id = response_json["_id"]
+        self.type = AccountType(response_json["type"])
+        self.nickname = response_json["nickname"]
+        self.rewards = response_json["rewards"]
+        self.balance = response_json["balance"]
+        self.customer_id = response_json["customer_id"]
