@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import Column, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from database.db import Base
@@ -17,5 +17,6 @@ class User(Base):
     nessie_customer_id = Column(String(250), nullable=True)
     plaid_access_token = Column(String(250), nullable=True)
     knot_access_token = Column(String(250), nullable=True)
+    budget_configuration = Column(JSONB, nullable=True)
 
     accounts = relationship("Account", back_populates="user")
