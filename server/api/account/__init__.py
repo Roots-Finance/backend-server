@@ -49,4 +49,4 @@ def get_transactions(id):
             }
         )
 
-    return jsonify({"status": 1, "error": 0, "transactions": transaction_json})
+    return jsonify({"status": 1, "error": 0, "data": transaction_json})

@@ -42,4 +42,4 @@ def get_user_accounts(oauth_sub):
 
     session.close()
 
-    return jsonify({"status": 1, "error": 0, "accounts": accounts_json})
+    return jsonify({"status": 1, "error": 0, "data": accounts_json})

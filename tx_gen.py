@@ -1,9 +1,7 @@
-import json
 import random
-import uuid
 from datetime import datetime, timedelta
 
-# Define transaction categories and corresponding merchants
+# Define the categories and merchants as provided
 categories = {
     "Food and Dining": [
         {
@@ -140,160 +138,108 @@ categories = {
     ],
 }
 
-# Common transaction amounts by category
-amount_ranges = {
-    "Food and Dining": {
-        "Grocery Shopping": (50, 250),
-        "Restaurants": (15, 85),
-        "Food Delivery": (20, 60),
-    },
-    "Transportation": {
-        "Gas": (35, 65),
-        "Ride Sharing": (10, 40),
-        "Public Transit": (2, 25),
-    },
-    "Shopping": {
-        "Clothing": (25, 150),
-        "Electronics": (50, 1000),
-        "Home Goods": (30, 300),
-    },
-    "Entertainment": {
-        "Streaming Services": (8, 20),
-        "Movies": (15, 50),
-        "Activities": (20, 100),
-    },
-    "Health": {
-        "Pharmacy": (10, 100),
-        "Doctor's Office": (20, 250),
-        "Fitness": (15, 120),
-    },
-    "Bills and Utilities": {
-        "Electricity": (80, 300),
-        "Water": (40, 120),
-        "Internet": (60, 150),
-        "Phone": (40, 180),
-    },
-    "Home": {"Rent/Mortgage": (1200, 2500), "Insurance": (80, 300)},
-    "Personal Care": {"Haircut": (20, 80), "Spa/Massage": (60, 200)},
-    "Education": {"Tuition": (500, 3000), "Books and Supplies": (50, 300)},
-}
+
+# Function to generate a random date within the last three months
+def random_date(start, end):
+    return start + timedelta(days=random.randint(0, (end - start).days))
 
 
-# Generate a realistic looking transaction id
-def generate_transaction_id():
-    return f"tx_{uuid.uuid4().hex[:16]}"
+def generate_transactions():
+    transactions = {"checking": [], "savings": [], "credit_card": []}
 
-
-# Generate a realistic account id
-def generate_account_id():
-    return f"acct_{uuid.uuid4().hex[:12]}"
-
-
-# Generate transaction data
-def generate_transactions(num_transactions=100):
-    transactions = []
-    account_ids = {
-        "credit_card": "CREDIT_CARD",
-        "checking_account": "CHECKING",
-        "savings_account": "SAVINGS",
-    }
-
-    # Start date: 3 months ago
+    # Define the time frame for 3 months
     end_date = datetime.now()
     start_date = end_date - timedelta(days=90)
 
-    for _ in range(num_transactions):
-        # Choose a random date between start_date and end_date
-        days_between = (end_date - start_date).days
-        random_day = random.randint(0, days_between)
-        transaction_date = (start_date + timedelta(days=random_day)).strftime(
-            "%Y-%m-%d"
+    total_income = 0
+    total_checking_spending = 0
+    total_credit_card_spending = 0
+
+    # Generate income deposits for savings account
+    for _ in range(6):  # Assuming bi-weekly income
+        amount = random.randint(1000, 3000)  # Random income amount
+        total_income += amount
+        transactions["savings"].append(
+            {
+                "date": random_date(start_date, end_date).date(),
+                "description": "Income Deposit",
+                "amount": amount,
+            }
         )
 
-        # Randomly choose an account type
-        account_type = random.choices(
-            ["credit_card", "checking_account", "savings_account"],
-            weights=[0.4, 0.2, 0.4],  # More weight on credit and checking
-            k=1,
-        )[0]
+    # Generate transactions for checking account
+    for _ in range(10):  # Random number of spending transactions
+        category = random.choice(list(categories.keys()))
+        merchant = random.choice(random.choice(categories[category])["merchants"])
+        amount = random.randint(10, 500)  # Random spending amount
+        total_checking_spending += amount
+        transactions["checking"].append(
+            {
+                "date": random_date(start_date, end_date).date(),
+                "description": f"{merchant} - {category}",
+                "amount": -amount,  # Negative for spending
+            }
+        )
 
-        # Determine transaction type based on account type
-        if account_type == "savings_account":
-            # Only deposits and transfers
-            transaction_name = "Deposit" if random.random() < 0.5 else "Transfer"
-            amount = round(
-                random.uniform(50, 1000), 2
-            )  # Example amount range for deposits
-            merchant = "Bank"  # Generic merchant for deposits/transfers
-        elif account_type == "checking_account":
-            # Can spend and pay credit card bills
-            category = random.choice(list(categories.keys()))
-            transaction_type = random.choice(categories[category])
-            transaction_name = transaction_type["name"]
-            merchant = random.choice(transaction_type["merchants"])
-            amount_min, amount_max = amount_ranges[category].get(
-                transaction_name, (10, 100)
-            )
-            amount = round(random.uniform(amount_min, amount_max), 2)
-            # Add a rule to pay credit card bills
-            if transaction_name == "Rent/Mortgage":
-                amount = round(
-                    random.uniform(1200, 2500), 2
-                )  # Example for rent/mortgage
-                merchant = "Property Management"
-        else:  # credit_card
-            category = random.choice(list(categories.keys()))
-            transaction_type = random.choice(categories[category])
-            transaction_name = transaction_type["name"]
-            merchant = random.choice(transaction_type["merchants"])
-            amount_min, amount_max = amount_ranges[category].get(
-                transaction_name, (10, 100)
-            )
-            amount = round(random.uniform(amount_min, amount_max), 2)
+    # Generate deposits for checking account
+    for _ in range(3):  # Random number of deposit transactions
+        amount = random.randint(100, 1000)  # Random deposit amount
+        transactions["checking"].append(
+            {
+                "date": random_date(start_date, end_date).date(),
+                "description": "Deposit",
+                "amount": amount,
+            }
+        )
 
-        # Create transaction object
-        # Create transaction object
-        transaction = {
-            "amount": amount,
-            "account_id": account_ids[account_type],
-            "transaction_id": generate_transaction_id(),
-            "date": transaction_date,
-            "merchant_name": merchant,
-            "category": transaction_name,
-            "pending": False,
-        }
+    # Generate transactions for credit card
+    for _ in range(15):  # Random number of spending transactions
+        category = random.choice(list(categories.keys()))
+        merchant = random.choice(random.choice(categories[category])["merchants"])
+        amount = random.randint(20, 800)  # Random spending amount
+        total_credit_card_spending += amount
+        transactions["credit_card"].append(
+            {
+                "date": random_date(start_date, end_date).date(),
+                "description": f"{merchant} - {category}",
+                "amount": -amount,  # Negative for spending
+            }
+        )
 
-        transactions.append(transaction)
+    # Ensure total income is between $500 and $1500 greater than total spending
+    total_spending = total_checking_spending + total_credit_card_spending
+    if total_income <= total_spending + 500:
+        additional_income = (
+            (total_spending + 500) - total_income + random.randint(0, 1000)
+        )
+        total_income += additional_income
 
-    # Sort transactions by date (newest first)
-    transactions.sort(key=lambda x: x["date"], reverse=True)
+        # Add the additional income to the savings account
+        transactions["savings"].append(
+            {
+                "date": random_date(start_date, end_date).date(),
+                "description": "Income Adjustment",
+                "amount": additional_income,
+            }
+        )
 
     return transactions
 
 
-# Generate 100 transactions
-transactions = generate_transactions(100)
+# Generate the transactions
+transactions = generate_transactions()
 
+# Print the generated transactions
+for account, trans in transactions.items():
+    print(f"\n{account.capitalize()} Transactions:")
+    for t in trans:
+        print(
+            f"Date: {t['date']}, Description: {t['description']}, Amount: ${t['amount']:.2f}"
+        )
 
-# Print as JSON
-# print(json.dumps(transactions, indent=2))
-
-
-cc_spend = 0
-checking_spend = 0
-savings_spend = 0
-
-
-for transaction in transactions:
-    if transaction["account_id"] == "CREDIT_CARD":
-        cc_spend += transaction["amount"]
-    elif transaction["account_id"] == "CHECKING":
-        checking_spend += transaction["amount"]
-    elif transaction["account_id"] == "SAVINGS":
-        print(json.dumps(transaction, indent=2))
-        savings_spend += transaction["amount"]
-
-
-print(f"Total spend on credit card: ${cc_spend}")
-print(f"Total spend on checking account: ${checking_spend}")
-print(f"Total spend on savings account: ${savings_spend}")
+checking_spend = sum(t["amount"] for t in transactions["checking"])
+print(f"\nChecking Account Spend: ${checking_spend:.2f}")
+savings_income = sum(t["amount"] for t in transactions["savings"])
+print(f"Savings Account Income: ${savings_income:.2f}")
+credit_card_spend = sum(t["amount"] for t in transactions["credit_card"])
+print(f"Credit Card Spend: ${credit_card_spend:.2f}")

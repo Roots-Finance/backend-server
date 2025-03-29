@@ -111,7 +111,7 @@ def create_user():
     session.close()
 
     return jsonify(
-        {"status": 1, "error": 0, "message": "User created", "user": user_json}
+        {"status": 1, "error": 0, "message": "User created", "data": user_json}
     )
 
 
@@ -198,4 +198,4 @@ def get_user(oauth_sub):
         "knot_access_token": located_user.knot_access_token,
     }
 
-    return jsonify({"status": 1, "error": 0, "user": user_json})
+    return jsonify({"status": 1, "error": 0, "data": user_json})
