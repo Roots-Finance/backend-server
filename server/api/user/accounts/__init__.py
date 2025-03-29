@@ -6,8 +6,6 @@ from nessie import Account as NessieAccount
 from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
 
-from .populate_transactions import generate_transactions
-
 
 @app.route("/user/<oauth_sub>/accounts", methods=["GET"])
 def get_user_accounts(oauth_sub):
@@ -28,8 +26,6 @@ def get_user_accounts(oauth_sub):
         )
 
     accounts_json = []
-
-    transactions = generate_transactions(100)
 
     for account in located_user.accounts:
         nessie_acc = NessieAccount(NessieClient)

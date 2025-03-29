@@ -67,6 +67,7 @@ class Customer:
             },
         )
 
+        print(response.json())
         self.id = response.json()["objectCreated"]["_id"]
 
     def update(self, **kwargs):
