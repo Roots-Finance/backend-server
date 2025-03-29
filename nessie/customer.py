@@ -1,6 +1,8 @@
+import random
 from typing import List
 
 from . import Account, Nessie
+from .types import AccountType
 
 
 class Customer:
@@ -121,3 +123,35 @@ class Customer:
                 )
             )
         return account_objs
+
+    def open_account(self, account_type: AccountType, nickname: str) -> Account:
+        """
+        Opens a new account for the customer.
+
+        Args:
+            account_type: The type of account to open.
+            nickname: The nickname for the account.
+
+        Returns:
+            A new account for the customer.
+        """
+        account_number = str(random.randint(1000000000, 9999999999))
+        account_json = self.client.post(
+            f"/customers/{self.id}/accounts",
+            {
+                "type": str(account_type),
+                "nickname": f"${nickname} | {account_number}",
+                "rewards": 0,
+                "balance": 0,
+            },
+        ).json()
+        account_json = account_json["objectCreated"]
+        return Account(
+            self.client,
+            id=account_json["_id"],
+            type=account_json["type"],
+            nickname=account_json["nickname"],
+            rewards=account_json["rewards"],
+            balance=account_json["balance"],
+            customer_id=account_json["customer_id"],
+        )

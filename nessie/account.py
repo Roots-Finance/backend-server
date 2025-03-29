@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 
 from .client import Nessie

@@ -1,8 +1,8 @@
 from flask import jsonify, request
 
 from database import DB
-from models import User
-from nessie import Customer, NessieClient
+from models import Account, User
+from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
 
 
@@ -64,6 +64,16 @@ def create_user():
     )
 
     session.add(new_user)
+
+    for acc_type in [
+        AccountType.CHECKING,
+        AccountType.SAVINGS,
+        AccountType.CREDIT_CARD,
+    ]:
+        new_account = new_customer.open_account(acc_type, acc_type.name)
+        db_account = Account(nessie_id=new_account.id, user=new_user)
+        session.add(db_account)
+
     session.commit()
     session.close()
 
@@ -77,3 +87,59 @@ def create_user():
             },
         }
     )
+
+
+@app.route("/user", methods=["PATCH"])
+def update_user():
+    """
+    Expected Request Body:
+    {
+      oauth_sub: string
+      plaid_key?: string
+      knot_key?: string
+      first_name?: string
+      last_name?: string
+    }
+    """
+    if not DB.connected:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Database not connected"}),
+            500,
+        )
+
+    req_json = request.get_json()
+
+    if "oauth_sub" not in req_json:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Missing oauth_sub"}),
+            400,
+        )
+
+    session = DB.create_session()
+
+    located_user = (
+        session.query(User).filter(User.oauth_sub == req_json["oauth_sub"]).first()
+    )
+
+    if not located_user:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "User not found"}),
+            404,
+        )
+
+    if "plaid_key" in req_json:
+        located_user.plaid_access_token = req_json["plaid_key"]
+
+    if "knot_key" in req_json:
+        located_user.knot_access_token = req_json["knot_key"]
+
+    if "first_name" in req_json:
+        located_user.first_name = req_json["first_name"]
+
+    if "last_name" in req_json:
+        located_user.last_name = req_json["last_name"]
+
+    session.commit()
+    session.close()
+
+    return jsonify({"status": 1, "error": 0, "message": "User updated"})
