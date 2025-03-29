@@ -75,6 +75,7 @@ def create_user():
         session.add(db_account)
 
     session.commit()
+    user_id = new_user.id
     session.close()
 
     return jsonify(
@@ -83,7 +84,7 @@ def create_user():
             "error": 0,
             "message": "User created",
             "user": {
-                "nessie_customer_id": new_customer.id,
+                "id": user_id,
             },
         }
     )
