@@ -1,0 +1,29 @@
+services:
+  api:
+    build: .
+    container_name: hp-flask-api
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      - pgdb
+    volumes:
+      - .:/app 
+
+  pgdb:
+    image: pgvector/pgvector:pg16
+    container_name: edu-trivia-pgvector
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS} 
+      POSTGRES_DB: ${DB_NAME} 
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+
+volumes:
+  pgvector_data:
+    name: pgvector_data
+    driver: local
