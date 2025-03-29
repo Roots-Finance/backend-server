@@ -147,16 +147,16 @@ def random_date(start, end):
 def generate_transactions():
     transactions = {"checking": [], "savings": [], "credit_card": []}
 
-    # Define the time frame for 3 months
+    # Define the time frame for 24 months
     end_date = datetime.now()
-    start_date = end_date - timedelta(days=90)
+    start_date = end_date - timedelta(days=730)
 
     total_income = 0
     total_checking_spending = 0
     total_credit_card_spending = 0
 
-    # Generate income deposits for savings account
-    for _ in range(6):  # Assuming bi-weekly income
+    for _ in range(48):
+
         amount = random.randint(1000, 3000)  # Random income amount
         total_income += amount
         transactions["savings"].append(
@@ -169,7 +169,7 @@ def generate_transactions():
         )
 
     # Generate transactions for checking account
-    for _ in range(10):  # Random number of spending transactions
+    for _ in range(80):  # Random number of spending transactions
         category = random.choice(list(categories.keys()))
         merchant = random.choice(random.choice(categories[category])["merchants"])
         amount = random.randint(10, 500)  # Random spending amount
@@ -184,7 +184,7 @@ def generate_transactions():
         )
 
     # Generate deposits for checking account
-    for _ in range(3):  # Random number of deposit transactions
+    for _ in range(24):  # Random number of deposit transactions
         amount = random.randint(100, 1000)  # Random deposit amount
         transactions["checking"].append(
             {
@@ -196,7 +196,7 @@ def generate_transactions():
         )
 
     # Generate transactions for credit card
-    for _ in range(15):  # Random number of spending transactions
+    for _ in range(120):  # Random number of spending transactions
         category = random.choice(list(categories.keys()))
         merchant = random.choice(random.choice(categories[category])["merchants"])
         amount = random.randint(20, 800)  # Random spending amount

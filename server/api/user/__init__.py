@@ -122,7 +122,7 @@ def create_user():
                     if transaction["amount"] < 0
                     else TransactionType.CREDIT
                 ),
-                amount=abs(transaction["amount"]),
+                amount=transaction["amount"],
                 account=db_account,
                 merchant=merchant,
                 date=transaction["date"],

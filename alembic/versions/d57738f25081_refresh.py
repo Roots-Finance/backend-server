@@ -1,18 +1,18 @@
-"""Restarting
+"""refresh
 
-Revision ID: 6c0f4534d8c4
+Revision ID: d57738f25081
 Revises: 
-Create Date: 2025-03-29 16:18:35.383561
+Create Date: 2025-03-29 19:47:56.408818
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '6c0f4534d8c4'
+revision: str = 'd57738f25081'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,6 +35,7 @@ def upgrade() -> None:
     sa.Column('nessie_customer_id', sa.String(length=250), nullable=True),
     sa.Column('plaid_access_token', sa.String(length=250), nullable=True),
     sa.Column('knot_access_token', sa.String(length=250), nullable=True),
+    sa.Column('budget_configuration', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('oauth_sub')
     )
