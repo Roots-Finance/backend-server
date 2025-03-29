@@ -143,3 +143,33 @@ def update_user():
     session.close()
 
     return jsonify({"status": 1, "error": 0, "message": "User updated"})
+
+
+@app.route("/user/<oauth_sub>", methods=["GET"])
+def get_user(oauth_sub):
+    if not DB.connected:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Database not connected"}),
+            500,
+        )
+
+    session = DB.create_session()
+
+    located_user = session.query(User).filter(User.oauth_sub == oauth_sub).first()
+
+    if not located_user:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "User not found"}),
+            404,
+        )
+
+    session.close()
+
+    user_json = {
+        "first_name": located_user.first_name,
+        "last_name": located_user.last_name,
+        "plaid_access_token": located_user.plaid_access_token,
+        "knot_access_token": located_user.knot_access_token,
+    }
+
+    return jsonify({"status": 1, "error": 0, "user": user_json})

@@ -16,5 +16,6 @@ class User(Base):
     last_name = Column(String(250), nullable=False)
     nessie_customer_id = Column(String(250), nullable=True)
     plaid_access_token = Column(String(250), nullable=True)
+    knot_access_token = Column(String(250), nullable=True)
 
     accounts = relationship("Account", back_populates="user")
