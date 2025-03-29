@@ -1,6 +1,7 @@
 from sqlalchemy import Engine, MetaData, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.orm.session import Session
+import traceback
 
 Base = declarative_base()
 
@@ -41,6 +42,7 @@ class Database:
             self.connected = True
             return True
         except:
+            print(traceback.format_exc())
             self.connected = False
             return False
 

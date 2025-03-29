@@ -41,6 +41,9 @@ if __name__ == "__main__":
     DB.set_url(DB_URL)
     NessieClient.set_key(NESSIE_KEY)
 
+    print(DB_HOST)
+    print(DB_URL)
+
     if not DB.connect():
         print("[red][!] Could not connect to database")
         sys.exit(1)
