@@ -7,7 +7,7 @@ from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
 
 
-@app.route("/account/<id>/transactions", methods=["GET"])
+@app.route("/account/<id>/nessie-transactions", methods=["GET"])
 def get_transactions(id):
     if not DB.connected:
         return (

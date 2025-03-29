@@ -75,18 +75,17 @@ def create_user():
         session.add(db_account)
 
     session.commit()
-    user_id = new_user.id
+    user_json = {
+        "id": new_user.id,
+        "first_name": new_user.first_name,
+        "last_name": new_user.last_name,
+        "plaid_access_token": new_user.plaid_access_token,
+        "knot_access_token": new_user.knot_access_token,
+    }
     session.close()
 
     return jsonify(
-        {
-            "status": 1,
-            "error": 0,
-            "message": "User created",
-            "user": {
-                "id": user_id,
-            },
-        }
+        {"status": 1, "error": 0, "message": "User created", "user": user_json}
     )
 
 
