@@ -11,7 +11,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    oauth_sub = Column(String(250), nullable=False)
+    oauth_sub = Column(String(250), nullable=False, unique=True)
     first_name = Column(String(250), nullable=False)
     last_name = Column(String(250), nullable=False)
     nessie_customer_id = Column(String(250), nullable=True)
