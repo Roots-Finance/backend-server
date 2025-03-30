@@ -14,7 +14,7 @@ from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
 
 
-@app.route("/user/<oauth_sub>/portfolio", methods=["POST"])
+@app.route("/user/<oauth_sub>/portfolio/preferences", methods=["POST"])
 def set_portfolio(oauth_sub):
     if not DB.connected:
         return (
