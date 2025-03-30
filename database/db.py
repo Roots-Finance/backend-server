@@ -37,7 +37,7 @@ class Database:
 
         """
         try:
-            self.engine = create_engine(self.database_url, pool_size=20, max_overflow=0)
+            self.engine = create_engine(self.database_url, pool_size=50, max_overflow=0)
             self.create_session = sessionmaker(bind=self.engine)
             self.metadata.reflect(bind=self.engine)
             self.connected = True

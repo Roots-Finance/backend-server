@@ -25,7 +25,6 @@ def generate_portfolio(oauth_sub):
 
     session = DB.create_session()
     located_user = session.query(User).filter(User.oauth_sub == oauth_sub).first()
-    session.close()
 
     if not located_user:
         return (
@@ -56,6 +55,7 @@ def generate_portfolio(oauth_sub):
         "investment_time_horizon": located_user.investment_time_horizon,
     }
 
+    session.close()
     # Generate portfolio using Gemini
     portfolio_data = generate_portfolio_content(preferences)
 
@@ -369,6 +369,7 @@ def gen_timeseries(oauth_sub):
     series = series.dropna(how="any")
 
     port_val = json.loads(series.to_json())["portfolio_value"]
+    session.close()
 
     return jsonify(
         {

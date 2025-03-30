@@ -346,6 +346,7 @@ def spy_portfolio(oauth_sub):
     series = series.dropna(how="any")
 
     port_val = json.loads(series.to_json())["portfolio_value"]
+    session.close()
 
     return jsonify(
         {
