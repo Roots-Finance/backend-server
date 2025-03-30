@@ -1,6 +1,9 @@
 import json
+import os
 
 from flask import jsonify, request
+from google import genai
+from google.genai import types
 
 from database import DB
 from models import Transaction, User
@@ -47,90 +50,178 @@ def lessons(oauth_sub):
             )
 
     session.close()
-
-    # transaction_json is a json array of all transactions across a
-    # user's accounts
-
-    lesson_json = """
-    {
-  "title": "Budgeting Fundamentals",
-  "description": "Learn how to create and maintain a personal budget that helps you achieve your financial goals.",
-  "lessons": [
-    {
-      "id": "cut-discretionary",
-      "title": "Trim Your {{topSpendingCategory}} Spending",
-      "description": "Discover effective strategies to reduce {{topSpendingCategory.toLowerCase()}} expenses while still enjoying life.",
-      "duration": "10 min",
-      "content": [
-        {
-          "title": "Understanding Your Spending Patterns",
-          "content": "Your spending patterns are the foundation of your financial health. By analyzing where your money goes each month, you can identify areas where you might be overspending or where you could potentially save more. Look at your chart to see how your balance changes over time, and notice the difference between your actual spending and what it could be with reduced discretionary expenses.",
-          "completed": false
-        },
-        {
-          "title": "Identifying Essential vs. Discretionary Expenses",
-          "content": "Essential expenses are those you can't avoid: housing, utilities, groceries, transportation, and healthcare. Discretionary expenses are those you have more control over: dining out, entertainment, shopping, and subscriptions. The purple line on your chart shows how your balance would look if you reduced discretionary spending. This doesn't mean eliminating things you enjoy, but rather being more intentional about where your money goes.",
-          "completed": false
-        },
-        {
-          "title": "Creating a Sustainable Savings Plan",
-          "content": "A good savings plan should be challenging but sustainable. Start by setting aside a small percentage of your income (even 5-10%) and gradually increase it over time. Automating your savings is one of the most effective strategies - set up a recurring transfer to your savings account on payday so you're saving before you have a chance to spend. Remember, consistency is more important than amount when you're starting out.",
-          "completed": false
-        },
-        {
-          "title": "Implementing Your New Budget",
-          "content": "Now that you understand your spending patterns and have identified potential savings opportunities, it's time to implement your plan. Start by reducing discretionary spending in your highest expense category. Set specific, measurable goals, like 'Reduce dining out from $400 to $300 this month' rather than just 'Spend less on food.' Track your progress weekly to stay accountable and make adjustments as needed. Remember, budgeting is a skill that improves with practice.",
-          "completed": false
-        }
-      ]
-    },
-    {
-      "id": "budget-basics",
-      "title": "Budget Basics",
-      "description": "Learn the fundamentals of creating and maintaining a personal budget.",
-      "duration": "15 min",
-      "content": [
-        {
-          "title": "What is a Budget?",
-          "content": "A budget is a financial plan that helps you track your income and expenses over a period of time. It's a tool that allows you to make informed decisions about your money and ensures you're spending less than you earn. A good budget should align with your financial goals and values.",
-          "completed": false
-        },
-        {
-          "title": "The 50/30/20 Rule",
-          "content": "The 50/30/20 rule is a simple budgeting framework that allocates 50% of your income to needs (housing, utilities, groceries), 30% to wants (entertainment, dining out), and 20% to savings and debt repayment. This balanced approach ensures you're meeting your obligations while still enjoying life and building financial security.",
-          "completed": false
-        },
-        {
-          "title": "Tracking Your Spending",
-          "content": "Consistent tracking is key to successful budgeting. Review your transactions regularly to ensure you're staying within your planned limits. Categorize your expenses to identify patterns and opportunities for savings. Remember that budgeting is an ongoing process - your budget should evolve as your financial situation changes.",
-          "completed": false
-        }
-      ]
-    }
-  ],
-  "resources": [
-    {
-      "id": "budget-template",
-      "title": "Simple Budget Template",
-      "type": "Spreadsheet",
-      "url": "https://www.consumerfinance.gov/consumer-tools/budget-template/",
-      "description": "A free budget spreadsheet from the Consumer Financial Protection Bureau."
-    },
-    {
-      "id": "emergency-fund",
-      "title": "Building an Emergency Fund",
-      "type": "Article",
-      "url": "https://www.investopedia.com/terms/e/emergency_fund.asp",
-      "description": "Learn why emergency funds are important and how to start yours."
-    }
-  ]
-}
-    """
-
+    
+    # Generate personalized lessons content using Gemini
+    lessons_data = generate_lessons_content(transactions_json)
+    
     return jsonify(
         {
             "status": 1,
             "error": 0,
-            "data": json.loads(lesson_json),
+            "data": lessons_data,
         }
     )
+
+
+def generate(prompt: str):
+    """Generate content using Google's Gemini API"""
+    client = genai.Client(
+        api_key=os.environ.get("GEMINI_KEY"),
+    )
+
+    model = "gemini-2.0-flash"
+    contents = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=prompt),
+            ],
+        ),
+    ]
+    generate_content_config = types.GenerateContentConfig(
+        response_mime_type="text/plain",
+    )
+
+    data_str = ""
+
+    for chunk in client.models.generate_content_stream(
+        model=model,
+        contents=contents,
+        config=generate_content_config,
+    ):
+        data_str += chunk.text
+
+    # the string starts with ```json and ends with ```
+    # get rid of it
+    data_str = data_str.replace("```json", "").replace("```", "")
+    return json.loads(data_str)
+
+
+def generate_lessons_content(transactions_json):
+    """Generate personalized lessons content based on transaction data"""
+    
+    # Analyze transactions to find spending patterns
+    categories = {}
+    for tx in transactions_json:
+        if tx.get("category") and not tx.get("type") == "CREDIT":
+            cat = tx.get("category")
+            if cat in categories:
+                categories[cat] += tx.get("amount", 0)
+            else:
+                categories[cat] = tx.get("amount", 0)
+    
+    # Find top spending categories
+    sorted_categories = sorted(categories.items(), key=lambda x: x[1], reverse=True)
+    top_categories = [cat[0] for cat in sorted_categories[:3]]
+    
+    # to keep things reasonable, limit to X transactions
+    # but spread them evenly across the timeframe of the transactions
+    end_idx = len(transactions_json)
+    indexer = end_idx / 50
+    
+    seen = set()
+    storage = []
+    for i in range(50):
+        # round down the index if a float
+        approx_idx = int(i * indexer)
+        
+        if approx_idx >= end_idx:
+            break
+        if approx_idx in seen:
+            continue
+        storage.append(transactions_json[approx_idx])
+        seen.add(approx_idx)
+        
+        
+    
+    
+    prompt = f"""
+    You are a personal finance advisor. Based on the user's transaction data, create personalized lessons and resources. 
+    
+    The user's top spending categories are: {", ".join(top_categories)}.
+    
+    Return only a JSON object that follows this structure exactly:
+    {{
+      "title": "Budgeting Fundamentals",
+      "description": "Learn how to create and maintain a personal budget that helps you achieve your financial goals.",
+      "lessons": [
+        {{
+          "id": "string-id",
+          "title": "Lesson Title",
+          "description": "Brief description of the lesson",
+          "duration": "X min",
+          "content": [
+            {{
+              "title": "Section Title",
+              "content": "Section content",
+              "completed": false
+            }}
+          ]
+        }}
+      ],
+      "resources": [
+        {{
+          "id": "resource-id",
+          "title": "Resource Title",
+          "type": "Article/Video/Tool/Spreadsheet/Calculator",
+          "url": "https://example.com",
+          "description": "Brief description of the resource"
+        }}
+      ]
+    }}
+    
+    Rules:
+    1. Create 3-4 lessons that are personalized to the user's spending patterns
+    2. At least one lesson should focus specifically on the user's top spending category
+    3. Each lesson should have 3-5 content sections
+    4. Each section in a lesson should flow from the next. Introduce concepts progressively
+    5. Every section should mention specific events or transactions from the user's data to emphasize relevance
+    6. Include 3-5 relevant resources
+    7. All URLs must be real, working URLs to legitimate financial education websites.
+    8. Make the content actionable and specific
+    9. Set all "completed" values to false
+    10. Include a mix of resource types (articles, tools, calculators, etc.)
+    11. Use descriptive IDs that relate to the content
+    
+    Transaction data:
+    {json.dumps(storage)}  # Limit to 50 transactions to keep prompt size reasonable
+    """
+    
+    try:
+        return generate(prompt)
+    except Exception as e:
+        print(f"Error generating lessons content: {e}")
+        # Fallback to basic content if generation fails
+        return {
+            "title": "Budgeting Fundamentals",
+            "description": "Learn how to create and maintain a personal budget that helps you achieve your financial goals.",
+            "lessons": [
+                {
+                    "id": "budget-basics",
+                    "title": "Budget Basics",
+                    "description": "Learn the fundamentals of creating and maintaining a personal budget.",
+                    "duration": "15 min",
+                    "content": [
+                        {
+                            "title": "What is a Budget?",
+                            "content": "A budget is a financial plan that helps you track your income and expenses over a period of time.",
+                            "completed": False
+                        },
+                        {
+                            "title": "The 50/30/20 Rule",
+                            "content": "The 50/30/20 rule is a simple budgeting framework that allocates 50% of your income to needs, 30% to wants, and 20% to savings and debt repayment.",
+                            "completed": False
+                        }
+                    ]
+                }
+            ],
+            "resources": [
+                {
+                    "id": "budget-template",
+                    "title": "Simple Budget Template",
+                    "type": "Spreadsheet",
+                    "url": "https://www.consumerfinance.gov/consumer-tools/budget-template/",
+                    "description": "A free budget spreadsheet from the Consumer Financial Protection Bureau."
+                }
+            ]
+        }
