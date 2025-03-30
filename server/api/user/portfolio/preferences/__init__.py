@@ -107,10 +107,13 @@ def set_portfolio(oauth_sub):
     #       "price": "string (price per share)",
     #       "total": "string (total transaction amount)"
 
+    portfolio = None
+
     if not located_user.portfolio:
         portfolio = Portfolio(user=located_user)
         session.add(portfolio)
-        located_user.portfolio = portfolio
+    else:
+        portfolio = located_user.portfolio
 
     if req_json["is_experienced_investor"] is True:
         located_user.has_trade_history = req_json["has_trade_history"]
@@ -126,7 +129,7 @@ def set_portfolio(oauth_sub):
                 shares=float(order["quantity"]),
                 price_per_share=float(order["price"]),
                 ticker=order["symbol"],
-                portfolio=located_user.portfolio,
+                portfolio=portfolio,
             )
 
             session.add(new_order)
