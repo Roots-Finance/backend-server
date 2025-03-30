@@ -136,7 +136,7 @@ def set_portfolio(oauth_sub):
     return jsonify({"status": 1, "error": 0, "message": "Portfolio updated"})
 
 
-@app.route("/user/<oauth_sub>/portfolio", methods=["GET"])
+@app.route("/user/<oauth_sub>/portfolio/preferences", methods=["GET"])
 def portfolio_timeseries(oauth_sub):
     if not DB.connected:
         return (
@@ -153,6 +153,18 @@ def portfolio_timeseries(oauth_sub):
             jsonify({"status": 0, "error": 1, "message": "User not found"}),
             404,
         )
+
+    if not located_user.portfolio:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Portfolio not found"}),
+            404,
+        )
+
+    if located_user.esg_preference is not None:
+        session.close()
+        return (jsonify({"status": 1, "error": 0, "message": "Preferences set"})), 200
+    session.close()
+    return (jsonify({"status": 0, "error": 1, "message": "Preferences not set"})), 404
 
     user_orders = located_user.portfolio.orders
 
@@ -172,5 +184,3 @@ def portfolio_timeseries(oauth_sub):
     session.close()
 
     return jsonify({"status": 1, "error": 0, "data": user_orders_json})
-
-
