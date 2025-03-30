@@ -3,7 +3,7 @@ import json
 from collections import defaultdict
 from tabulate import tabulate
 
-def calculate_rewards(transactions):
+def calculate_rewards(route_to_transactions):
     # Mapping: CSV files (in subfolder) to the corresponding transaction category
     csv_to_category = {
         'cleaned_tables/drugstore.csv': 'Health',
@@ -22,7 +22,7 @@ def calculate_rewards(transactions):
         category_to_csvs[norm_cat].append(csv_file)
 
     # Load transactions from JSON
-    with open('transactions', 'r') as f:
+    with open(route_to_transactions, 'r') as f:
         transactions = json.load(f)
 
     # Normalize the transaction categories

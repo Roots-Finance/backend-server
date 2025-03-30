@@ -1,8 +1,8 @@
 Bank Name,Card Name,Cashback,Spend Cap,url,image_url
 Citi,Custom Cash,0.05,$500/ month,https://www.citi.com/credit-cards/citi-custom-cash-credit-card, https://online.citi.com/CBOL/family/cards/card-art/citi-custom-cash/citi-custom-cash_247x156.png
 Bank of America,Customized Cash,0.03,"$2,500/ quarter",https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/, https://www.bankofamerica.com/content/images/ContextualSiteGraphics/CreditCardArt/en_US/Approved_PCM/8ckn_cshsigcm_v_250x158.png
-U.S. Bank,Cash+,,"$2,000/ quarter",https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html, https://i.ibb.co/TDhgwHbf/photo-cash-plus-signature-wd.png
-U.S. Bank (Elan),Max Cash Preferred,,"$2,000/ quarter",https://card.myaccountaccess.com/credit/visa-max-cash-preferred.do, https://www.associatedbank.com/images/max_cash_credit_card.png
+U.S. Bank,Cash+,0.01,"$2,000/ quarter",https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html, https://i.ibb.co/TDhgwHbf/photo-cash-plus-signature-wd.png
+U.S. Bank (Elan),Max Cash Preferred,0.01,"$2,000/ quarter",https://card.myaccountaccess.com/credit/visa-max-cash-preferred.do, https://www.associatedbank.com/images/max_cash_credit_card.png
 U.S. Bank,Altitude Go,0.04,No Cap,https://www.usbank.com/credit-cards/altitude-go-visa-signature-credit-card.html, https://i.ibb.co/bMmZ9mrT/us-bank-go.png
 U.S. Bank (Elan),Everyday Rewards+,0.04,No Cap,https://card.myaccountaccess.com/credit/visa-everyday-rewards-plus.do, https://www.associatedbank.com/images/everyday_rewards_.png
 Synchrony,Verizon Visa,0.04,No Cap,https://www.verizon.com/solutions-and-services/verizon-visa-card/, https://i.ibb.co/3Y7Mxc1Q/veruiszon-wide.png
