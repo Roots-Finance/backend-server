@@ -140,12 +140,17 @@ def process_orders_from_json(orders_json):
         else:
             print(f"Unrecognized order type: {order_type}")
 
+    allocations = {}
+    for column in portfolio.columns:
+        allocations[column] = portfolio[column].iloc[-1]
     # Add the "total" column by summing across all ticker columns for each day
     portfolio["Value"] = portfolio.sum(axis=1)
     final_series = portfolio[["Value"]]
+    for item, val in allocations.items():
+        allocations[item] = val / final_series["Value"].iloc[-1] * 100
     final_series.index = final_series.index.strftime("%Y-%m-%d")
     port_val = json.loads(final_series.to_json())["Value"]
-    return port_val
+    return port_val, allocations
 
 
 @app.route("/user/<oauth_sub>/portfolio", methods=["GET"])
@@ -196,8 +201,14 @@ def get_portfolio(oauth_sub):
         for order in user_orders
     ]
 
-    series = process_orders_from_json(user_orders_json)
+    series, allocations = process_orders_from_json(user_orders_json)
 
     session.close()
 
-    return jsonify({"status": 1, "error": 0, "data": series})
+    return jsonify(
+        {
+            "status": 1,
+            "error": 0,
+            "data": {"series": series, "allocations": allocations},
+        }
+    )
