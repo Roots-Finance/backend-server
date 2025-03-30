@@ -1,7 +1,8 @@
+import traceback
+
 from sqlalchemy import Engine, MetaData, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.orm.session import Session
-import traceback
 
 Base = declarative_base()
 
@@ -36,7 +37,7 @@ class Database:
 
         """
         try:
-            self.engine = create_engine(self.database_url)
+            self.engine = create_engine(self.database_url, pool_size=20, max_overflow=0)
             self.create_session = sessionmaker(bind=self.engine)
             self.metadata.reflect(bind=self.engine)
             self.connected = True
