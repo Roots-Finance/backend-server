@@ -153,6 +153,12 @@ def portfolio_timeseries(oauth_sub):
             jsonify({"status": 0, "error": 1, "message": "User not found"}),
             404,
         )
+        
+    if not located_user.portfolio:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "User has no portfolio"}),
+            404,
+        )
 
     user_orders = located_user.portfolio.orders
 
