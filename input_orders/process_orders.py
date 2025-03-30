@@ -7,25 +7,35 @@ def insert_buy_order(portfolio, date, ticker, shares, price_Per_Share, start_dat
     df = pd.read_csv(data_route)
     df['Date'] = pd.to_datetime(df['Date'])
     
-    # Only use the dates from this ticker that fall within our overall date range
-    mask = (df['Date'] >= start_date) & (df['Date'] <= end_date)
+    # Convert order date to datetime and use it as the start for this ticker's data
+    order_date = pd.to_datetime(date)
+    
+    # Filter the ticker's data starting at the order date (not the overall start_date)
+    mask = (df['Date'] >= order_date) & (df['Date'] <= end_date)
     temp_df = df.loc[mask, ['Date', 'Close']]
     
-    # Compute daily return relative to the first available trading day
-    temp_df['Daily Return'] = temp_df['Close'] / temp_df['Close'].iloc[0]
+    # Compute daily return relative to the close price on the order date
+    base_close = temp_df['Close'].iloc[0]
+    temp_df['Daily Return'] = temp_df['Close'] / base_close
     temp_df.set_index('Date', inplace=True)
     
     # Calculate the order’s initial value
     start_val = shares * price_Per_Share
-    # Add the ticker column using the computed performance
-    portfolio[ticker] = start_val * temp_df['Daily Return']
     
-    # For dates before the buy order date, set the value to 0
-    order_date = pd.to_datetime(date)
-    portfolio.loc[portfolio.index < order_date, ticker] = 0
+    # Create a new series for the new order, initializing with zeros across the portfolio's index
+    new_order_series = pd.Series(0, index=portfolio.index)
+    new_order_series.loc[temp_df.index] = start_val * temp_df['Daily Return']
+    
+    # If the ticker already exists, add the new order's series to the existing values;
+    # otherwise, simply assign the new series to that ticker.
+    if ticker in portfolio.columns:
+        portfolio[ticker] = portfolio[ticker].fillna(0) + new_order_series
+    else:
+        portfolio[ticker] = new_order_series
     
     print("Portfolio after BUY order:")
     return portfolio
+
 
 def insert_sell_order(portfolio, date, ticker, shares, price_Per_Share, start_date, end_date):
     print("\n\nPROCESSING SELL ORDER")
