@@ -127,4 +127,10 @@ def lessons(oauth_sub):
 }
     """
 
-    return jsonify({"status": 1, "error": 0, "data": json.loads(lesson_json)})
+    return jsonify(
+        {
+            "status": 1,
+            "error": 0,
+            "data": json.loads(lesson_json),
+        }
+    )

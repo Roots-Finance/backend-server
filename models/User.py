@@ -20,3 +20,5 @@ class User(Base):
     budget_configuration = Column(JSONB, nullable=True)
 
     accounts = relationship("Account", back_populates="user")
+
+    # portfolio = relationship("Portfolio", back_populates="user")
