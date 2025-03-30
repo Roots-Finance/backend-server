@@ -172,3 +172,5 @@ def portfolio_timeseries(oauth_sub):
     session.close()
 
     return jsonify({"status": 1, "error": 0, "data": user_orders_json})
+
+
