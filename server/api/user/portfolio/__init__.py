@@ -1,9 +1,12 @@
 import base64
 import json
 import os
+from datetime import datetime, time
+from typing import Dict
 
 import pandas as pd
 from dateutil.parser import parse
+from dateutil.relativedelta import relativedelta
 from flask import jsonify, request
 from google import genai
 from google.genai import types
@@ -210,5 +213,145 @@ def get_portfolio(oauth_sub):
             "status": 1,
             "error": 0,
             "data": {"series": series, "allocations": allocations},
+        }
+    )
+
+
+def gen_timeseries_portfolio(
+    start_date: datetime, end_date: datetime, monthly_savings: float, allocations: Dict
+) -> pd.DataFrame:
+    """
+    Generates a time series of daily portfolio value based on monthly investments and allocations.
+
+    Args:
+        start_date (datetime): The starting date of the investment period.
+        end_date (datetime): The ending date of the investment period.
+        monthly_savings (float): The amount to invest each month.
+        allocations (Dict): A dictionary mapping stock tickers to their allocation percentages (e.g., {"AAPL": 0.5, "MSFT": 0.5}).
+
+    Returns:
+        pd.DataFrame: A DataFrame with a 'date' column and a 'portfolio_value' column.  The 'portfolio_value'
+                       column contains the total value of the portfolio for each day in the specified period.
+    """
+
+    # Initialize data structures
+    portfolio = {
+        ticker: 0.0 for ticker in allocations
+    }  # Number of shares of each stock
+    portfolio_values = []
+    dates = []
+
+    stock_dfs = {}
+
+    # Fetch stock data
+    for ticker in allocations:
+        stock_df = pd.read_csv(os.path.join(os.getcwd(), "stockdata", f"{ticker}.csv"))
+        stock_dfs[ticker] = stock_df
+
+    def get_price(ticker, date):
+        if date not in stock_dfs[ticker]["Date"].values:
+            return None
+        return stock_dfs[ticker][stock_dfs[ticker]["Date"] == date]["Close"].values[0]
+
+    start = False
+    current_date = start_date
+    while datetime.combine(current_date, time.min) <= end_date:
+        date_str = current_date.strftime("%Y-%m-%d")
+
+        # Monthly investment
+        if current_date.day == 1 or start is False:
+            for ticker, allocation in allocations.items():
+                allocation /= 100
+                stock_price = get_price(ticker, date_str)
+                if stock_price is not None:  # Ensure it's a trading day
+                    shares_to_buy = (monthly_savings * allocation) / stock_price
+                    portfolio[ticker] += shares_to_buy
+                    start = True
+
+        # Calculate daily portfolio value
+        total_portfolio_value = 0.0
+        for ticker, num_shares in portfolio.items():
+            stock_price = get_price(ticker, date_str)
+            if stock_price is not None:  # Handle no trading day.
+                total_portfolio_value += num_shares * stock_price
+
+        portfolio_values.append(total_portfolio_value)
+        dates.append(current_date)
+        current_date += relativedelta(days=1)  # Increment by one day
+
+    # Create the DataFrame
+    df = pd.DataFrame({"date": dates, "portfolio_value": portfolio_values})
+    df["date"] = pd.to_datetime(df["date"])  # Ensure 'date' column is datetime
+    df.set_index("date", inplace=True)
+    df.index = df.index.strftime("%Y-%m-%d")
+    return df
+
+
+@app.route("/user/<oauth_sub>/spy_portfolio", methods=["POST"])
+def spy_portfolio(oauth_sub):
+    if not DB.connected:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Database not connected"}),
+            500,
+        )
+
+    session = DB.create_session()
+
+    located_user = session.query(User).filter(User.oauth_sub == oauth_sub).first()
+
+    if not located_user:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "User not found"}),
+            404,
+        )
+
+    if not located_user.portfolio:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Portfolio not found"}),
+            404,
+        )
+
+    req_json = request.get_json()
+
+    if any(key not in req_json for key in ["monthly_savings"]):
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Missing required fields"}),
+            400,
+        )
+
+    monthly_savings = float(request.json["monthly_savings"])
+
+    first_order = None
+
+    for order in located_user.portfolio.orders:
+        if first_order is None or order.date < first_order.date:
+            first_order = order
+
+    if not first_order:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "No orders found"}),
+            404,
+        )
+
+    allocations = {"SPY": 100}
+
+    first_day = first_order.date
+    today = datetime.now()
+
+    series = gen_timeseries_portfolio(first_day, today, monthly_savings, allocations)
+
+    # Remove rows that are 0
+    series = series[series != 0]
+
+    series = series.dropna(how="any")
+
+    port_val = json.loads(series.to_json())["portfolio_value"]
+
+    return jsonify(
+        {
+            "status": 1,
+            "data": {
+                "series": port_val,
+            },
         }
     )
