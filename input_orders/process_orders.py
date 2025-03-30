@@ -124,9 +124,11 @@ def process_orders_from_json(orders_json):
         print(portfolio)
     
     # Add the "total" column by summing across all ticker columns for each day
-    portfolio['total'] = portfolio.sum(axis=1)
-    
-    return portfolio
+    portfolio['Value'] = portfolio.sum(axis=1)
+    final_series = portfolio[['Value']]
+    final_series.index = final_series.index.strftime("%Y-%m-%d")
+    port_val = json.loads(final_series.to_json())["Value"]
+    return port_val
 
 def main():
     sample_orders_json = [
