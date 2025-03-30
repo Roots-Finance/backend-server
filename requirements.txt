@@ -7,3 +7,4 @@ rich==13.9.4
 SQLAlchemy==2.0.37
 psycopg2_binary==2.9.10
 google.genai
+python-dateutil
