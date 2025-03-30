@@ -108,7 +108,9 @@ def set_portfolio(oauth_sub):
     #       "total": "string (total transaction amount)"
 
     if not located_user.portfolio:
-        located_user.portfolio = Portfolio(user=located_user)
+        portfolio = Portfolio(user=located_user)
+        session.add(portfolio)
+        located_user.portfolio = portfolio
 
     if req_json["is_experienced_investor"] is True:
         located_user.has_trade_history = req_json["has_trade_history"]
