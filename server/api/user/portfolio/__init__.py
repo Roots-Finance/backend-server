@@ -188,6 +188,12 @@ def get_portfolio(oauth_sub):
             404,
         )
 
+    if len(located_user.portfolio.orders) == 0:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "No orders found"}),
+            404,
+        )
+
     user_orders = located_user.portfolio.orders
 
     # Sort user orders from earliest to latest
