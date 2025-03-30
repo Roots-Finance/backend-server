@@ -174,6 +174,12 @@ def get_portfolio(oauth_sub):
     #     "Price_Per_Share": 250.0
     #   }
 
+    if not located_user.portfolio:
+        return (
+            jsonify({"status": 0, "error": 1, "message": "Portfolio not found"}),
+            404,
+        )
+
     user_orders = located_user.portfolio.orders
 
     # Sort user orders from earliest to latest
