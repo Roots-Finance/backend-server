@@ -21,4 +21,4 @@ class User(Base):
 
     accounts = relationship("Account", back_populates="user")
 
-    # portfolio = relationship("Portfolio", back_populates="user")
+    portfolio = relationship("Portfolio", back_populates="user", uselist=False)
