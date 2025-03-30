@@ -14,5 +14,6 @@ import server.api.user.budget
 import server.api.user.budget.lessons
 import server.api.user.cards
 import server.api.user.portfolio
+import server.api.user.tax
 
 app.register_blueprint(api_router)

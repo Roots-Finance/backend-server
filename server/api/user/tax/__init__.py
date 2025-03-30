@@ -13,44 +13,6 @@ from nessie import AccountType, Customer, NessieClient
 from server.app import api_router as app
 
 
-@app.route("/user/<oauth_sub>/accounts", methods=["GET"])
-def get_user_accounts(oauth_sub):
-    if not DB.connected:
-        return (
-            jsonify({"status": 0, "error": 1, "message": "Database not connected"}),
-            500,
-        )
-
-    session = DB.create_session()
-
-    located_user = session.query(User).filter(User.oauth_sub == oauth_sub).first()
-
-    if not located_user:
-        return (
-            jsonify({"status": 0, "error": 1, "message": "User not found"}),
-            404,
-        )
-
-    accounts_json = []
-
-    for account in located_user.accounts:
-        nessie_acc = NessieAccount(NessieClient)
-        nessie_acc.get_account(account.nessie_id)
-        accounts_json.append(
-            {
-                "id": account.id,
-                "type": str(nessie_acc.type),
-                "nickname": nessie_acc.nickname,
-                "rewards": nessie_acc.rewards,
-                "balance": nessie_acc.balance,
-            }
-        )
-
-    session.close()
-
-    return jsonify({"status": 1, "error": 0, "data": accounts_json})
-
-
 def generate(prompt: str):
     client = genai.Client(
         api_key=os.environ.get("GEMINI_KEY"),
@@ -85,8 +47,8 @@ def generate(prompt: str):
     return json.loads(data_str)
 
 
-@app.route("/user/<oauth_sub>/ai-budget", methods=["GET"])
-def ai_budget(oauth_sub):
+@app.route("/user/<oauth_sub>/taxes", methods=["GET"])
+def tax_report(oauth_sub):
     if not DB.connected:
         return (
             jsonify({"status": 0, "error": 1, "message": "Database not connected"}),
@@ -127,19 +89,33 @@ def ai_budget(oauth_sub):
     prompt = f"""
     Here is a users spending for the past 24 months.
 
-    For each category, provide the percentage of spending that should be KEPT in order to try and save money.
-    Provide the following format and only the following format, no explanation.
-    Some of these categories probably shouldn't be cut at all, and thats fine.
+    You are an expert accountant and premier US tax expert.
+    With the above data, you will generate a tax report for the user.
+    Return the report as a JSON object.
+    Try to include as many deductions as possible, and try to estimate the amount, I never want it to be 0. In any reason, you are speaking in first person, directly to the user.
+
+    Match the following format
 
     {{
-    "category_name": percentage,
+        "TaxYearsCovered": [],
+        "IncomeSummary": {{
+            "<year>": {{
+                "TaxableIncome": ,
+                "TaxLiability": ,
+                "PotentialDeductions": [
+                    {{
+                        "Name": "",
+                        "Reason": ""
+                        "Amount": 
+                    }}
+                ],
+                "TotalPotentialDeductions": 
+        }}
     }}
-
-    Finally, the final key in the json object should be "reasoning" I'd like you to explain where you made cuts, why, why didn't you make cuts, etc. Reasoning should be in first person, talking directly to the user. Highlight specific purchases or observable trends in your reasoning. Additionally, comment exclusively on discretionary purchases. Respond in a bullet point format. Importantly, if a category is only responsible for credits, do not comment on it at all. The bullet points should be their own string in an array, no hyphen or anything denoting the fact that it is a bullet point required.
 
     {json.dumps(transactions_json)}
     """
 
     response = generate(prompt)
 
-    return jsonify({"status": 1, "error": 0, "data": response})
+    return jsonify({"status": 1, "error": 0, "data": response}), 200
