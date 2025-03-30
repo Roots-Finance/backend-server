@@ -1,4 +1,5 @@
 import pandas as pd
+import json
 
 def insert_buy_order(portfolio, date, ticker, shares, price_Per_Share, start_date, end_date):
     print("\n\nADDING BUY ORDER")
@@ -53,25 +54,41 @@ def insert_sell_order(portfolio, date, ticker, shares, price_Per_Share, start_da
     print("Portfolio after SELL order:")
     return portfolio
 
-def process_orders():
-    # Read and clean orders CSV
-    orders = pd.read_csv('input_orders/orders.csv')
+def process_orders_from_json(orders_json):
+    # Since orders are always provided as JSON, parse them if necessary.
+    if isinstance(orders_json, str):
+        orders_list = json.loads(orders_json)
+    else:
+        orders_list = orders_json
+    orders = pd.DataFrame(orders_list)
+    
+    # Basic error checking: ensure orders DataFrame is not empty and required columns exist
+    if orders.empty:
+        raise ValueError("Orders JSON is empty. Please provide valid order data.")
+    required_columns = ["Date", "Order_Type", "Ticker", "Shares", "Price_Per_Share"]
+    missing_cols = [col for col in required_columns if col not in orders.columns]
+    if missing_cols:
+        raise ValueError(f"Missing required fields in orders JSON: {missing_cols}")
+    
+    # Clean and prepare orders DataFrame
     orders['Date'] = pd.to_datetime(orders['Date'])
     orders['Order_Type'] = orders['Order_Type'].str.strip().str.lower()
     orders['Ticker'] = orders['Ticker'].str.strip()
-    
     orders.sort_values('Date', inplace=True)
     
     # Overall start and end dates
     start_date = orders['Date'].min()
     end_date = '2025-03-29'
     
-    # Use the first order's ticker (assumed to be a buy) to build the portfolio index
+    # Use the first order's ticker (assumed to be a buy) to build the portfolio index.
     first_order = orders.iloc[0]
     first_ticker = first_order['Ticker']
-    df_first = pd.read_csv(f'stockdata/{first_ticker}.csv')
-    df_first['Date'] = pd.to_datetime(df_first['Date'])
+    try:
+        df_first = pd.read_csv(f'stockdata/{first_ticker}.csv')
+    except Exception as e:
+        raise ValueError(f"Error reading stock data for ticker {first_ticker}: {e}")
     
+    df_first['Date'] = pd.to_datetime(df_first['Date'])
     mask = (df_first['Date'] >= start_date) & (df_first['Date'] <= end_date)
     filtered_close = df_first.loc[mask, ['Date', 'Close']]
     filtered_close['Daily Return'] = filtered_close['Close'] / filtered_close['Close'].iloc[0]
@@ -106,12 +123,114 @@ def process_orders():
         print("\nPortfolio snapshot after processing order:")
         print(portfolio)
     
+    # Add the "total" column by summing across all ticker columns for each day
+    portfolio['total'] = portfolio.sum(axis=1)
+    
     return portfolio
 
 def main():
-    final_portfolio = process_orders()
-    final_portfolio['total'] = final_portfolio.sum(axis=1)
+    sample_orders_json = [
+      {
+        "Date": "2025-01-03",
+        "Order_Type": "Buy",
+        "Ticker": "AAPL",
+        "Shares": 50,
+        "Price_Per_Share": 248.94
+      },
+      {
+        "Date": "2025-01-06",
+        "Order_Type": "Buy",
+        "Ticker": "JPM",
+        "Shares": 50,
+        "Price_Per_Share": 240.85
+      },
+      {
+        "Date": "2025-01-13",
+        "Order_Type": "Sell",
+        "Ticker": "AAPL",
+        "Shares": 25,
+        "Price_Per_Share": 233.53
+      },
+      {
+        "Date": "2025-01-15",
+        "Order_Type": "Buy",
+        "Ticker": "GOOGL",
+        "Shares": 30,
+        "Price_Per_Share": 197.0
+      },
+      {
+        "Date": "2025-01-17",
+        "Order_Type": "Buy",
+        "Ticker": "INTC",
+        "Shares": 40,
+        "Price_Per_Share": 30.75
+      },
+      {
+        "Date": "2025-01-21",
+        "Order_Type": "Buy",
+        "Ticker": "AMZN",
+        "Shares": 10,
+        "Price_Per_Share": 3300.0
+      },
+      {
+        "Date": "2025-01-22",
+        "Order_Type": "Sell",
+        "Ticker": "JPM",
+        "Shares": 15,
+        "Price_Per_Share": 200.25
+      },
+      {
+        "Date": "2025-01-24",
+        "Order_Type": "Buy",
+        "Ticker": "NFLX",
+        "Shares": 20,
+        "Price_Per_Share": 300.3
+      },
+      {
+        "Date": "2025-01-27",
+        "Order_Type": "Buy",
+        "Ticker": "NVDA",
+        "Shares": 25,
+        "Price_Per_Share": 450.1
+      },
+      {
+        "Date": "2025-01-29",
+        "Order_Type": "Sell",
+        "Ticker": "INTC",
+        "Shares": 35,
+        "Price_Per_Share": 55.9
+      },
+      {
+        "Date": "2025-02-03",
+        "Order_Type": "Buy",
+        "Ticker": "META",
+        "Shares": 40,
+        "Price_Per_Share": 270.45
+      },
+      {
+        "Date": "2025-02-04",
+        "Order_Type": "Sell",
+        "Ticker": "NFLX",
+        "Shares": 20,
+        "Price_Per_Share": 290.55
+      },
+      {
+        "Date": "2025-02-05",
+        "Order_Type": "Buy",
+        "Ticker": "IBM",
+        "Shares": 20,
+        "Price_Per_Share": 130.7
+      },
+      {
+        "Date": "2025-03-13",
+        "Order_Type": "Buy",
+        "Ticker": "AAPL",
+        "Shares": 10,
+        "Price_Per_Share": 250.0
+      }
+    ]
 
+    final_portfolio = process_orders_from_json(sample_orders_json)
     print("\nFinal portfolio:")
     print(final_portfolio)
     # YOU'D RETURN final_portfolio!!!!
