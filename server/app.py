@@ -11,5 +11,6 @@ import server.api.test
 import server.api.user
 import server.api.user.accounts
 import server.api.user.budget
+import server.api.user.budget.lessons
 
 app.register_blueprint(api_router)
